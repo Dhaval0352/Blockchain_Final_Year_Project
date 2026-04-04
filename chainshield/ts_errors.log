@@ -1,0 +1,86 @@
+src/components/Header.tsx(21,29): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/components/ThemeToggle.tsx(12,25): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/components/ThemeToggle.tsx(14,24): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/navigation/AdminNavigator.tsx(47,90): error TS2322: Type '{ color: string; size: number; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/navigation/AdminNavigator.tsx(55,83): error TS2322: Type '{ color: string; size: number; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/navigation/ManufacturerNavigator.tsx(47,86): error TS2322: Type '{ color: string; size: number; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/navigation/ManufacturerNavigator.tsx(55,87): error TS2322: Type '{ color: string; size: number; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/navigation/UserNavigator.tsx(47,83): error TS2322: Type '{ color: string; size: number; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/navigation/UserNavigator.tsx(55,92): error TS2322: Type '{ color: string; size: number; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/navigation/UserNavigator.tsx(63,87): error TS2322: Type '{ color: string; size: number; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/admin/AdminDashboard.tsx(30,32): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/admin/AdminDashboard.tsx(44,34): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/admin/AdminDashboard.tsx(61,36): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/admin/AdminDashboard.tsx(71,33): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/admin/ManufacturerApprovalsScreen.tsx(29,35): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/admin/ProductApprovalsScreen.tsx(39,33): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/admin/RegisteredProductsScreen.tsx(28,41): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/admin/RegisteredProductsScreen.tsx(35,34): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/auth/LoginScreen.tsx(44,27): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/auth/LoginScreen.tsx(54,30): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/auth/LoginScreen.tsx(64,34): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/auth/LoginScreen.tsx(83,34): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/manufacturer/ManufacturerDashboard.tsx(25,34): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/manufacturer/ManufacturerDashboard.tsx(41,37): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/manufacturer/ManufacturerDashboard.tsx(50,36): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/manufacturer/ManufacturerDashboard.tsx(66,26): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/manufacturer/MyProductsScreen.tsx(19,47): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/manufacturer/MyProductsScreen.tsx(20,54): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/manufacturer/MyProductsScreen.tsx(21,50): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/manufacturer/ProductRegistrationScreen.tsx(54,30): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/manufacturer/QRViewScreen.tsx(25,32): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/manufacturer/QRViewScreen.tsx(36,37): error TS2322: Type '{ size: number; color: string; style: { marginRight: number; }; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/manufacturer/QRViewScreen.tsx(43,34): error TS2322: Type '{ size: number; color: string; style: { marginRight: number; }; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/shared/ProfileScreen.tsx(22,29): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/user/HistoryScreen.tsx(30,44): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/user/HistoryScreen.tsx(32,40): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/user/ScanResultScreen.tsx(23,34): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/user/ScanResultScreen.tsx(25,30): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/user/ScanResultScreen.tsx(39,36): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/user/ScanResultScreen.tsx(61,34): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/user/UserDashboard.tsx(24,31): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/user/UserDashboard.tsx(41,38): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.
+src/screens/user/UserDashboard.tsx(53,29): error TS2322: Type '{ size: number; color: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.
+  Property 'color' does not exist on type 'IntrinsicAttributes & LucideProps'.

@@ -1,0 +1,6 @@
+{
+  "extends": "./chainshield/tsconfig.json",
+  "include": [
+    "chainshield/**/*"
+  ]
+}
