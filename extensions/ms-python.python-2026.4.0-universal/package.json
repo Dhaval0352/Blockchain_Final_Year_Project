@@ -23,10 +23,7 @@
 		"testObserver",
 		"quickPickItemTooltip",
 		"terminalDataWriteEvent",
-		"terminalExecuteCommandEvent",
-		"codeActionAI",
-		"notebookReplDocument",
-		"notebookVariableProvider"
+		"terminalExecuteCommandEvent"
 	],
 	"author": {
 		"name": "Microsoft Corporation"
