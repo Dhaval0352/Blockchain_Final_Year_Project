@@ -12,13 +12,10 @@ export const ProductApprovalsScreen = () => {
   const { colors } = useTheme();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  const handleApprove = (id: string) => {
+  const handleApprove = async (id: string) => {
     setLoadingId(id);
-    // Simulate smart contract call
-    setTimeout(() => {
-      approveProduct(id);
-      setLoadingId(null);
-    }, 1500);
+    await approveProduct(id);
+    setLoadingId(null);
   };
 
   return (

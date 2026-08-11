@@ -36,6 +36,9 @@ export const RegisteredProductsScreen = () => {
                  <Text style={[styles.txid, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="middle">
                    {item.txId}
                  </Text>
+                 <View style={[styles.badge, { backgroundColor: item.onChain ? colors.success : colors.warning }]}>
+                   <Text style={styles.badgeText}>{item.onChain ? 'On-chain' : 'Offline'}</Text>
+                 </View>
               </View>
             </Card>
           )}
@@ -57,4 +60,6 @@ const styles = StyleSheet.create({
   sub: { fontSize: 12, marginTop: 4 },
   txBox: { flexDirection: 'row', alignItems: 'center', marginTop: 16, padding: 8, backgroundColor: 'rgba(0,0,0,0.03)', borderRadius: 8 },
   txid: { fontSize: 12, marginLeft: 8, fontFamily: 'monospace', flex: 1 },
+  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginLeft: 8 },
+  badgeText: { fontSize: 10, fontWeight: '700', color: '#2D3748' },
 });

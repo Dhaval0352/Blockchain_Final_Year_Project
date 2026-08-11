@@ -17,6 +17,14 @@
         }
     },
     "publisher": "ms-python",
+    "enabledApiProposals": [
+        "contribEditorContentMenu",
+        "quickPickSortByLabel",
+        "testObserver",
+        "quickPickItemTooltip",
+        "terminalDataWriteEvent",
+        "terminalExecuteCommandEvent"
+    ],
     "author": {
         "name": "Microsoft Corporation"
     },

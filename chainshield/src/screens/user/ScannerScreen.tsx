@@ -3,6 +3,8 @@ import { View, Text, StyleSheet } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useAppStore, ScanResult } from '../../store/appStore';
+import { verifyProductOnChain, recordScanOnChain } from '../../services/chainApi';
+import { checkSuspiciousActivity } from '../../utils/suspiciousActivity';
 import { useTheme } from '../../theme/ThemeContext';
 import { Button } from '../../components/Button';
 
@@ -11,7 +13,7 @@ type Props = BottomTabScreenProps<any, 'Scanner'>;
 export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
-  const { addScanResult } = useAppStore();
+  const { addScanResult, registeredProducts, registerScan, scanHistory } = useAppStore();
   const { colors } = useTheme();
 
   useEffect(() => {
@@ -37,24 +39,97 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
     );
   }
 
-  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
+  const handleBarCodeScanned = async ({ type, data }: { type: string; data: string }) => {
     setScanned(true);
-    
-    // Mocking blockahin verification based on QR data
-    const isAuthentic = Math.random() > 0.3; // 70% chance authentic
-    
+
+    // The QR encodes { id, txId } — see buildQrPayload in QRViewScreen.
+    let parsed: { id?: string; txId?: string } | null = null;
+    try {
+      parsed = JSON.parse(data);
+    } catch {
+      parsed = null; // not a ChainShield code at all (e.g. a random QR)
+    }
+
+    if (!parsed?.id) {
+      const result: ScanResult = {
+        id: Math.random().toString(),
+        productId: 'unknown',
+        productName: 'Unrecognised QR Code',
+        timestamp: new Date().toISOString(),
+        status: 'FAKE',
+        scanCount: 0,
+      };
+      addScanResult(result);
+      navigation.navigate('ScanResult', { result });
+      return;
+    }
+
+    // Ground truth is the blockchain: ask the chain-backend whether this
+    // product id was actually registered on-chain. If the backend can't be
+    // reached at all (e.g. it wasn't started), fall back to the locally
+    // cached registeredProducts list so the demo can still run.
+    const chainRecord = await verifyProductOnChain(parsed.id);
+    const usedChain = chainRecord.ok;
+
+    let isAuthentic: boolean;
+    let productName: string | undefined;
+    let batchNumber: string | undefined;
+    let mfgDate: string | undefined;
+    let expDate: string | undefined;
+    let manufacturerName: string | undefined;
+
+    if (usedChain) {
+      isAuthentic = chainRecord.exists;
+      productName = chainRecord.productName;
+      batchNumber = chainRecord.batchNumber;
+      mfgDate = chainRecord.mfgDate;
+      expDate = chainRecord.expDate;
+      manufacturerName = chainRecord.manufacturerName;
+    } else {
+      const matchedProduct = registeredProducts.find(
+        (p) => p.id === parsed!.id && p.txId === parsed!.txId
+      );
+      isAuthentic = !!matchedProduct;
+      productName = matchedProduct?.productName;
+      batchNumber = matchedProduct?.batchNumber;
+      mfgDate = matchedProduct?.mfgDate;
+      expDate = matchedProduct?.expDate;
+      manufacturerName = matchedProduct?.manufacturerId;
+    }
+
+    let scanCount = 0;
+    if (isAuthentic) {
+      if (usedChain) {
+        const chainScan = await recordScanOnChain(parsed.id);
+        scanCount = chainScan.scanCount ? Number(chainScan.scanCount) : registerScan(parsed.id);
+      } else {
+        scanCount = registerScan(parsed.id);
+      }
+    }
+
+    // Run this against scanHistory *before* this scan is added below —
+    // otherwise the current scan would always match against itself.
+    let suspicious = false;
+    let suspicionMessage: string | null = null;
+    if (isAuthentic) {
+      const suspicionCheck = checkSuspiciousActivity(parsed.id, scanCount, scanHistory);
+      suspicious = suspicionCheck.suspicious;
+      suspicionMessage = suspicionCheck.message;
+    }
     const result: ScanResult = {
       id: Math.random().toString(),
-      productId: 'p_' + Math.floor(Math.random() * 1000),
-      productName: isAuthentic ? 'Glow Serum 50ml' : 'Unknown Product',
+      productId: parsed.id,
+      productName: productName || 'Unknown Product',
       timestamp: new Date().toISOString(),
       status: isAuthentic ? 'AUTHENTIC' : 'FAKE',
-      batchNumber: isAuthentic ? 'B123-Auth' : undefined,
-      mfgDate: isAuthentic ? '2023-10-01' : undefined,
-      expDate: isAuthentic ? '2025-10-01' : undefined,
-      manufacturerName: isAuthentic ? 'Beauty Co.' : undefined,
-      txId: isAuthentic ? '0xabc123456789def' : undefined,
-      scanCount: isAuthentic ? Math.floor(Math.random() * 5) + 1 : 0,
+      batchNumber,
+      mfgDate,
+      expDate,
+      manufacturerName,
+      txId: parsed.txId,
+      scanCount,
+      suspicious,
+      suspicionMessage,
     };
 
     addScanResult(result);

@@ -34,15 +34,15 @@ export const ScanResultScreen: React.FC<Props> = ({ route, navigation }) => {
         </Text>
       </Card>
 
-      {isAuthentic && result.scanCount > 3 && (
+      {isAuthentic && result.suspicious && (
         <View style={styles.warningBox}>
           <AlertTriangle size={20} color={colors.warning} />
           <Text style={[styles.warningText, { color: colors.warning }]}>
-            Warning: This QR code has been scanned {result.scanCount} times.
+            {result.suspicionMessage}
           </Text>
         </View>
       )}
-
+      
       <Text style={[styles.sectionTitle, { color: colors.text }]}>Product Details</Text>
       <Card variant="outlined">
         <DetailRow label="Product Name" value={result.productName} colors={colors} />

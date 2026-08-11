@@ -1,12 +1,20 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import QRCode from 'react-native-qrcode-svg';
 import { useTheme } from '../../theme/ThemeContext';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
-import { QrCode, Share, Download } from 'lucide-react-native';
+import { Share, Download } from 'lucide-react-native';
 
 type Props = NativeStackScreenProps<any, 'QRView'>;
+
+// Everything the scanner needs to look the product up and confirm the
+// code hasn't been copied onto a different item: the product id plus the
+// on-chain transaction id assigned when the admin approved it.
+export function buildQrPayload(product: { id: string; txId?: string }): string {
+  return JSON.stringify({ id: product.id, txId: product.txId });
+}
 
 export const QRViewScreen: React.FC<Props> = ({ route }) => {
   const { colors } = useTheme();
@@ -20,10 +28,13 @@ export const QRViewScreen: React.FC<Props> = ({ route }) => {
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Batch: {product.batchNumber}</Text>
         
         <View style={styles.qrContainer}>
-          {/* Real implementation would use react-native-qrcode-svg or similar */}
-          <View style={[styles.qrMock, { borderColor: colors.primary }]}>
-            <QrCode size={120} color={colors.text} />
-            <Text style={[styles.qrMockText, { color: colors.textSecondary }]}>Mock QR Code</Text>
+          <View style={[styles.qrBox, { borderColor: colors.primary }]}>
+            <QRCode
+              value={buildQrPayload(product)}
+              size={180}
+              color={colors.text}
+              backgroundColor={colors.surface}
+            />
           </View>
         </View>
 
@@ -55,8 +66,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: 'bold' },
   subtitle: { fontSize: 14, marginTop: 4 },
   qrContainer: { marginVertical: 32, alignItems: 'center' },
-  qrMock: { width: 200, height: 200, borderWidth: 2, borderStyle: 'dashed', borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  qrMockText: { marginTop: 16, fontSize: 12 },
+  qrBox: { padding: 16, borderWidth: 2, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   txid: { fontSize: 12, fontFamily: 'monospace' },
   actions: { marginTop: 24, flexDirection: 'row', justifyContent: 'space-between' },
   actionBtn: { flex: 0.48, paddingHorizontal: 0 }, // flex overrides width, so this works better

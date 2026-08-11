@@ -6,6 +6,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { Header } from '../../components/Header';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { SealBadge } from '../../components/SealBadge';
 import { QrCode, ClipboardList, User } from 'lucide-react-native';
 
 type Props = BottomTabScreenProps<any, 'Dashboard'>;
@@ -18,39 +19,45 @@ export const UserDashboard: React.FC<Props> = ({ navigation }) => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Dashboard" userName={user?.name} />
       <ScrollView contentContainerStyle={styles.scroll}>
-        
+
         <Card style={styles.actionCard}>
-          <View style={[styles.iconBox, { backgroundColor: colors.primary }]}>
-            <QrCode size={32} color="#000" />
-          </View>
+          <SealBadge size={76}>
+            <QrCode size={32} color="#1A1300" />
+          </SealBadge>
           <Text style={[styles.cardTitle, { color: colors.text }]}>Scan Product</Text>
-          <Text style={[styles.cardSub, { color: colors.textSecondary }]}>Verify cosmetics authenticity instantly.</Text>
-          <Button 
-            title="Scan QR Code" 
-            onPress={() => navigation.navigate('Scanner')} 
-            style={{ marginTop: 16, width: '100%' }}
+          <Text style={[styles.cardSub, { color: colors.textSecondary }]}>
+            Verify cosmetics authenticity instantly.
+          </Text>
+          <Button
+            title="Scan QR Code"
+            onPress={() => navigation.navigate('Scanner')}
+            style={{ marginTop: 18, width: '100%' }}
           />
         </Card>
 
         <View style={styles.grid}>
-          <Card 
-            style={styles.gridCard} 
+          <Card
+            style={styles.gridCard}
             variant="outlined"
             onPress={() => navigation.navigate('History')}
           >
-            <ClipboardList size={28} color={colors.primary} />
+            <View style={[styles.iconChip, { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary }]}>
+              <ClipboardList size={20} color={colors.primary} />
+            </View>
             <Text style={[styles.gridTitle, { color: colors.text }]}>History</Text>
             <Text style={[styles.gridSub, { color: colors.textSecondary }]}>
-              {scanHistory.length} Scans
+              {scanHistory.length} Scan{scanHistory.length === 1 ? '' : 's'}
             </Text>
           </Card>
 
-          <Card 
-            style={styles.gridCard} 
+          <Card
+            style={styles.gridCard}
             variant="outlined"
             onPress={() => navigation.navigate('Profile')}
           >
-            <User size={28} color={colors.secondary} />
+            <View style={[styles.iconChip, { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.secondary }]}>
+              <User size={20} color={colors.secondary} />
+            </View>
             <Text style={[styles.gridTitle, { color: colors.text }]}>Profile</Text>
             <Text style={[styles.gridSub, { color: colors.textSecondary }]}>
               Account Details
@@ -71,20 +78,15 @@ const styles = StyleSheet.create({
     padding: 24,
     marginBottom: 16,
   },
-  iconBox: {
-    width: 64, height: 64,
-    borderRadius: 32,
-    justifyContent: 'center', alignItems: 'center',
-    marginBottom: 16,
-  },
-  cardTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+  cardTitle: { fontSize: 19, fontWeight: 'bold', marginTop: 16, marginBottom: 8 },
   cardSub: { fontSize: 14, textAlign: 'center' },
   grid: { flexDirection: 'row', justifyContent: 'space-between' },
   gridCard: {
     width: '48%',
-    alignItems: 'center',
-    padding: 20,
+    alignItems: 'flex-start',
+    padding: 18,
   },
-  gridTitle: { fontSize: 16, fontWeight: '600', marginTop: 12, marginBottom: 4 },
+  iconChip: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 14 },
+  gridTitle: { fontSize: 15, fontWeight: '600', marginBottom: 2 },
   gridSub: { fontSize: 12 },
 });
