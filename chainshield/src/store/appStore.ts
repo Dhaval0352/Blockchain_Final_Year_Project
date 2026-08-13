@@ -1,7 +1,14 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { addProductOnChain, recordScanOnChain } from '../services/chainApi';
+import { recordScanOnChain } from '../services/chainApi';
+import {
+  submitProduct,
+  fetchPendingProducts as fetchPendingProductsApi,
+  fetchApprovedProducts as fetchApprovedProductsApi,
+  approveProductOnBackend,
+  rejectProductOnBackend,
+} from '../services/productsApi';
 
 export type UserRole = 'USER' | 'MANUFACTURER' | 'ADMIN' | null;
 
@@ -31,6 +38,12 @@ export interface ScanResult {
   suspicionMessage?: string | null;
 }
 
+export interface ProductItem {
+  itemId: string;
+  txHash: string;
+  blockNumber?: number;
+}
+
 export interface ProductRegistration {
   id: string;
   manufacturerId: string;
@@ -42,9 +55,11 @@ export interface ProductRegistration {
   mrp?: string;
   description: string;
   imageUrl?: string;
+  quantity: number; // how many physical units this batch registers
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  txId?: string; // Set when approved
-  onChain?: boolean; // true = txId is a real tx hash from ChainShield.sol on Ganache
+  items?: ProductItem[]; // set once approved — one entry per physical unit, each independently verifiable
+  txId?: string; // kept for backward compatibility with older screens; prefer items[]
+  onChain?: boolean; // true = items[] contains real tx hashes from ChainShield.sol on Ganache
 }
 
 interface AppState {
@@ -63,7 +78,7 @@ interface AppState {
 
   // Manufacturer state
   myProducts: ProductRegistration[];
-  requestProductRegistration: (product: Omit<ProductRegistration, 'id' | 'status' | 'txId'>) => void;
+  requestProductRegistration: (product: Omit<ProductRegistration, 'id' | 'status' | 'items'>) => Promise<void>;
 
   // Admin state
   pendingManufacturers: UserProfile[];
@@ -73,7 +88,13 @@ interface AppState {
   approveManufacturer: (id: string) => void;
   rejectManufacturer: (id: string) => void;
   approveProduct: (id: string) => Promise<void>;
-  rejectProduct: (id: string) => void;
+  rejectProduct: (id: string) => Promise<void>;
+
+  // Syncs pendingProducts / registeredProducts with the shared backend —
+  // call on screen focus so every device sees the same lists instead of
+  // only what was created locally.
+  fetchPendingProducts: () => Promise<void>;
+  fetchApprovedProducts: () => Promise<void>;
 }
 
 // Initial mock data
@@ -87,6 +108,7 @@ const mockPendingProducts: ProductRegistration[] = [
     mfgDate: '2023-10-01',
     expDate: '2025-10-01',
     description: 'Vitamin C Face Serum',
+    quantity: 1,
     status: 'PENDING',
   }
 ];
@@ -101,8 +123,9 @@ const mockRegisteredProducts: ProductRegistration[] = [
     mfgDate: '2023-05-01',
     expDate: '2026-05-01',
     description: 'Long lasting red lipstick',
+    quantity: 1,
     status: 'APPROVED',
-    txId: '0xabc123...',
+    items: [{ itemId: 'p2-0001', txHash: '0xabc123...' }],
   }
 ];
 
@@ -140,16 +163,27 @@ export const useAppStore = create<AppState>()(
       },
 
       myProducts: [...mockRegisteredProducts], // Will be filtered by user in UI
-      requestProductRegistration: (product) => {
-        // Use a single id for both lists so approve/reject can update the
-        // manufacturer's own copy of the product (previously these were
-        // two different random ids and the two lists could never sync).
-        const id = `p_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-        const newProduct: ProductRegistration = { ...product, id, status: 'PENDING' };
-        set((state) => ({
-          myProducts: [...state.myProducts, newProduct],
-          pendingProducts: [...state.pendingProducts, newProduct],
-        }));
+      requestProductRegistration: async (product) => {
+        // Real write: submit to the shared backend so every admin device
+        // sees this pending product, not just this one.
+        const result = await submitProduct(product);
+
+        if (result.ok && result.product) {
+          set((state) => ({
+            myProducts: [...state.myProducts, result.product as ProductRegistration],
+            pendingProducts: [...state.pendingProducts, result.product as ProductRegistration],
+          }));
+        } else {
+          // Backend unreachable — keep working locally so the demo doesn't
+          // die, but this copy is only visible on this device until the
+          // backend comes back and a real submission is made.
+          const id = `p_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+          const newProduct: ProductRegistration = { ...product, id, status: 'PENDING' };
+          set((state) => ({
+            myProducts: [...state.myProducts, newProduct],
+            pendingProducts: [...state.pendingProducts, newProduct],
+          }));
+        }
       },
 
       pendingManufacturers: [...mockPendingManufacturers],
@@ -168,27 +202,23 @@ export const useAppStore = create<AppState>()(
         const product = get().pendingProducts.find(p => p.id === id);
         if (!product) return;
 
-        // This is the real write: the backend calls ChainShield.addProduct()
-        // on Ganache and gives us back the actual transaction hash.
-        const chainResult = await addProductOnChain({
-          id: product.id,
-          productName: product.productName,
-          batchNumber: product.batchNumber,
-          manufacturerName: product.manufacturerId,
-          category: product.category,
-          mfgDate: product.mfgDate,
-          expDate: product.expDate,
-        });
+        // Real write: backend calls ChainShield.addProduct() once PER
+        // physical unit (product.quantity), each with its own unique id,
+        // and returns the full record with one QR-worth of data per unit.
+        const result = await approveProductOnBackend(id);
 
-        const approvedProduct: ProductRegistration = chainResult.ok
-          ? { ...product, status: 'APPROVED', txId: chainResult.txHash, onChain: true }
+        const approvedProduct: ProductRegistration = result.ok && result.product
+          ? { ...(result.product as ProductRegistration), onChain: true }
           : {
               // Backend/Ganache unreachable — approve locally so the demo
               // doesn't die, but mark it clearly as NOT actually on-chain.
               ...product,
               status: 'APPROVED',
-              txId: `OFFLINE-${Math.random().toString(16).slice(2, 10)}`,
               onChain: false,
+              items: Array.from({ length: product.quantity || 1 }, (_, i) => ({
+                itemId: `${product.id}-${String(i + 1).padStart(4, '0')}`,
+                txHash: `OFFLINE-${Math.random().toString(16).slice(2, 10)}`,
+              })),
             };
 
         set((state) => ({
@@ -198,17 +228,39 @@ export const useAppStore = create<AppState>()(
         }));
       },
 
-      rejectProduct: (id) => set((state) => {
-        const product = state.pendingProducts.find(p => p.id === id);
-        if (!product) return state;
+      rejectProduct: async (id) => {
+        const result = await rejectProductOnBackend(id);
 
-        const rejectedProduct: ProductRegistration = { ...product, status: 'REJECTED' };
+        set((state) => {
+          const product = state.pendingProducts.find(p => p.id === id);
+          if (!product) return state;
 
-        return {
-          pendingProducts: state.pendingProducts.filter(p => p.id !== id),
-          myProducts: state.myProducts.map(p => p.id === id ? rejectedProduct : p)
-        };
-      }),
+          const rejectedProduct: ProductRegistration = result.ok && result.product
+            ? (result.product as ProductRegistration)
+            : { ...product, status: 'REJECTED' };
+
+          return {
+            pendingProducts: state.pendingProducts.filter(p => p.id !== id),
+            myProducts: state.myProducts.map(p => p.id === id ? rejectedProduct : p)
+          };
+        });
+      },
+
+      fetchPendingProducts: async () => {
+        const result = await fetchPendingProductsApi();
+        if (result.ok && result.products) {
+          set({ pendingProducts: result.products });
+        }
+        // Backend unreachable — silently keep whatever is already in
+        // state (mock/local data) rather than wiping the screen.
+      },
+
+      fetchApprovedProducts: async () => {
+        const result = await fetchApprovedProductsApi();
+        if (result.ok && result.products) {
+          set({ registeredProducts: result.products });
+        }
+      },
     }),
     {
       name: 'chainshield-storage',
