@@ -1,0 +1,546 @@
+diff --git a/chainshield/package.json b/chainshield/package.json
+index c602231..b9d5a32 100644
+--- a/chainshield/package.json
++++ b/chainshield/package.json
+@@ -20,10 +20,13 @@
+     "expo-status-bar": "~3.0.9",
+     "lucide-react-native": "^0.577.0",
+     "react": "19.1.0",
++    "react-dom": "19.1.0",
+     "react-native": "0.81.5",
++    "react-native-qrcode-svg": "^6.3.21",
+     "react-native-safe-area-context": "~5.6.2",
+     "react-native-screens": "~4.16.0",
+     "react-native-svg": "15.12.1",
++    "react-native-web": "~0.21.0",
+     "zustand": "^5.0.11"
+   },
+   "devDependencies": {
+diff --git a/chainshield/src/screens/admin/ProductApprovalsScreen.tsx b/chainshield/src/screens/admin/ProductApprovalsScreen.tsx
+index 0589988..83cc1cd 100644
+--- a/chainshield/src/screens/admin/ProductApprovalsScreen.tsx
++++ b/chainshield/src/screens/admin/ProductApprovalsScreen.tsx
+@@ -12,13 +12,10 @@ export const ProductApprovalsScreen = () => {
+   const { colors } = useTheme();
+   const [loadingId, setLoadingId] = useState<string | null>(null);
+ 
+-  const handleApprove = (id: string) => {
++  const handleApprove = async (id: string) => {
+     setLoadingId(id);
+-    // Simulate smart contract call
+-    setTimeout(() => {
+-      approveProduct(id);
+-      setLoadingId(null);
+-    }, 1500);
++    await approveProduct(id);
++    setLoadingId(null);
+   };
+ 
+   return (
+diff --git a/chainshield/src/screens/admin/RegisteredProductsScreen.tsx b/chainshield/src/screens/admin/RegisteredProductsScreen.tsx
+index ca09f82..7610953 100644
+--- a/chainshield/src/screens/admin/RegisteredProductsScreen.tsx
++++ b/chainshield/src/screens/admin/RegisteredProductsScreen.tsx
+@@ -36,6 +36,9 @@ export const RegisteredProductsScreen = () => {
+                  <Text style={[styles.txid, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="middle">
+                    {item.txId}
+                  </Text>
++                 <View style={[styles.badge, { backgroundColor: item.onChain ? colors.success : colors.warning }]}>
++                   <Text style={styles.badgeText}>{item.onChain ? 'On-chain' : 'Offline'}</Text>
++                 </View>
+               </View>
+             </Card>
+           )}
+@@ -57,4 +60,6 @@ const styles = StyleSheet.create({
+   sub: { fontSize: 12, marginTop: 4 },
+   txBox: { flexDirection: 'row', alignItems: 'center', marginTop: 16, padding: 8, backgroundColor: 'rgba(0,0,0,0.03)', borderRadius: 8 },
+   txid: { fontSize: 12, marginLeft: 8, fontFamily: 'monospace', flex: 1 },
++  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginLeft: 8 },
++  badgeText: { fontSize: 10, fontWeight: '700', color: '#2D3748' },
+ });
+diff --git a/chainshield/src/screens/manufacturer/QRViewScreen.tsx b/chainshield/src/screens/manufacturer/QRViewScreen.tsx
+index 20f27f1..3c65c00 100644
+--- a/chainshield/src/screens/manufacturer/QRViewScreen.tsx
++++ b/chainshield/src/screens/manufacturer/QRViewScreen.tsx
+@@ -1,13 +1,21 @@
+ import React from 'react';
+ import { View, Text, StyleSheet } from 'react-native';
+ import { NativeStackScreenProps } from '@react-navigation/native-stack';
++import QRCode from 'react-native-qrcode-svg';
+ import { useTheme } from '../../theme/ThemeContext';
+ import { Card } from '../../components/Card';
+ import { Button } from '../../components/Button';
+-import { QrCode, Share, Download } from 'lucide-react-native';
++import { Share, Download } from 'lucide-react-native';
+ 
+ type Props = NativeStackScreenProps<any, 'QRView'>;
+ 
++// Everything the scanner needs to look the product up and confirm the
++// code hasn't been copied onto a different item: the product id plus the
++// on-chain transaction id assigned when the admin approved it.
++export function buildQrPayload(product: { id: string; txId?: string }): string {
++  return JSON.stringify({ id: product.id, txId: product.txId });
++}
++
+ export const QRViewScreen: React.FC<Props> = ({ route }) => {
+   const { colors } = useTheme();
+   // Assume generic navigation passing params
+@@ -20,10 +28,13 @@ export const QRViewScreen: React.FC<Props> = ({ route }) => {
+         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Batch: {product.batchNumber}</Text>
+         
+         <View style={styles.qrContainer}>
+-          {/* Real implementation would use react-native-qrcode-svg or similar */}
+-          <View style={[styles.qrMock, { borderColor: colors.primary }]}>
+-            <QrCode size={120} color={colors.text} />
+-            <Text style={[styles.qrMockText, { color: colors.textSecondary }]}>Mock QR Code</Text>
++          <View style={[styles.qrBox, { borderColor: colors.primary }]}>
++            <QRCode
++              value={buildQrPayload(product)}
++              size={180}
++              color={colors.text}
++              backgroundColor={colors.surface}
++            />
+           </View>
+         </View>
+ 
+@@ -55,8 +66,7 @@ const styles = StyleSheet.create({
+   title: { fontSize: 20, fontWeight: 'bold' },
+   subtitle: { fontSize: 14, marginTop: 4 },
+   qrContainer: { marginVertical: 32, alignItems: 'center' },
+-  qrMock: { width: 200, height: 200, borderWidth: 2, borderStyle: 'dashed', borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+-  qrMockText: { marginTop: 16, fontSize: 12 },
++  qrBox: { padding: 16, borderWidth: 2, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+   txid: { fontSize: 12, fontFamily: 'monospace' },
+   actions: { marginTop: 24, flexDirection: 'row', justifyContent: 'space-between' },
+   actionBtn: { flex: 0.48, paddingHorizontal: 0 }, // flex overrides width, so this works better
+diff --git a/chainshield/src/screens/user/ScannerScreen.tsx b/chainshield/src/screens/user/ScannerScreen.tsx
+index 304c803..a22dbae 100644
+--- a/chainshield/src/screens/user/ScannerScreen.tsx
++++ b/chainshield/src/screens/user/ScannerScreen.tsx
+@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
+ import { CameraView, useCameraPermissions } from 'expo-camera';
+ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+ import { useAppStore, ScanResult } from '../../store/appStore';
++import { verifyProductOnChain, recordScanOnChain } from '../../services/chainApi';
+ import { useTheme } from '../../theme/ThemeContext';
+ import { Button } from '../../components/Button';
+ 
+@@ -11,7 +12,7 @@ type Props = BottomTabScreenProps<any, 'Scanner'>;
+ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
+   const [permission, requestPermission] = useCameraPermissions();
+   const [scanned, setScanned] = useState(false);
+-  const { addScanResult } = useAppStore();
++  const { addScanResult, registeredProducts, registerScan } = useAppStore();
+   const { colors } = useTheme();
+ 
+   useEffect(() => {
+@@ -37,24 +38,86 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
+     );
+   }
+ 
+-  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
++  const handleBarCodeScanned = async ({ type, data }: { type: string; data: string }) => {
+     setScanned(true);
+-    
+-    // Mocking blockahin verification based on QR data
+-    const isAuthentic = Math.random() > 0.3; // 70% chance authentic
+-    
++
++    // The QR encodes { id, txId } — see buildQrPayload in QRViewScreen.
++    let parsed: { id?: string; txId?: string } | null = null;
++    try {
++      parsed = JSON.parse(data);
++    } catch {
++      parsed = null; // not a ChainShield code at all (e.g. a random QR)
++    }
++
++    if (!parsed?.id) {
++      const result: ScanResult = {
++        id: Math.random().toString(),
++        productId: 'unknown',
++        productName: 'Unrecognised QR Code',
++        timestamp: new Date().toISOString(),
++        status: 'FAKE',
++        scanCount: 0,
++      };
++      addScanResult(result);
++      navigation.navigate('ScanResult', { result });
++      return;
++    }
++
++    // Ground truth is the blockchain: ask the chain-backend whether this
++    // product id was actually registered on-chain. If the backend can't be
++    // reached at all (e.g. it wasn't started), fall back to the locally
++    // cached registeredProducts list so the demo can still run.
++    const chainRecord = await verifyProductOnChain(parsed.id);
++    const usedChain = chainRecord.ok;
++
++    let isAuthentic: boolean;
++    let productName: string | undefined;
++    let batchNumber: string | undefined;
++    let mfgDate: string | undefined;
++    let expDate: string | undefined;
++    let manufacturerName: string | undefined;
++
++    if (usedChain) {
++      isAuthentic = chainRecord.exists;
++      productName = chainRecord.productName;
++      batchNumber = chainRecord.batchNumber;
++      mfgDate = chainRecord.mfgDate;
++      expDate = chainRecord.expDate;
++      manufacturerName = chainRecord.manufacturerName;
++    } else {
++      const matchedProduct = registeredProducts.find(
++        (p) => p.id === parsed!.id && p.txId === parsed!.txId
++      );
++      isAuthentic = !!matchedProduct;
++      productName = matchedProduct?.productName;
++      batchNumber = matchedProduct?.batchNumber;
++      mfgDate = matchedProduct?.mfgDate;
++      expDate = matchedProduct?.expDate;
++      manufacturerName = matchedProduct?.manufacturerId;
++    }
++
++    let scanCount = 0;
++    if (isAuthentic) {
++      if (usedChain) {
++        const chainScan = await recordScanOnChain(parsed.id);
++        scanCount = chainScan.scanCount ? Number(chainScan.scanCount) : registerScan(parsed.id);
++      } else {
++        scanCount = registerScan(parsed.id);
++      }
++    }
++
+     const result: ScanResult = {
+       id: Math.random().toString(),
+-      productId: 'p_' + Math.floor(Math.random() * 1000),
+-      productName: isAuthentic ? 'Glow Serum 50ml' : 'Unknown Product',
++      productId: parsed.id,
++      productName: productName || 'Unknown Product',
+       timestamp: new Date().toISOString(),
+       status: isAuthentic ? 'AUTHENTIC' : 'FAKE',
+-      batchNumber: isAuthentic ? 'B123-Auth' : undefined,
+-      mfgDate: isAuthentic ? '2023-10-01' : undefined,
+-      expDate: isAuthentic ? '2025-10-01' : undefined,
+-      manufacturerName: isAuthentic ? 'Beauty Co.' : undefined,
+-      txId: isAuthentic ? '0xabc123456789def' : undefined,
+-      scanCount: isAuthentic ? Math.floor(Math.random() * 5) + 1 : 0,
++      batchNumber,
++      mfgDate,
++      expDate,
++      manufacturerName,
++      txId: parsed.txId,
++      scanCount,
+     };
+ 
+     addScanResult(result);
+diff --git a/chainshield/src/services/chainApi.ts b/chainshield/src/services/chainApi.ts
+new file mode 100644
+index 0000000..510eb65
+--- /dev/null
++++ b/chainshield/src/services/chainApi.ts
+@@ -0,0 +1,105 @@
++import { Platform } from 'react-native';
++
++// Where the chain-backend (server/index.js) is running.
++//
++//  - Web (npm run web):              http://localhost:4000 works as-is.
++//  - Android emulator:                10.0.2.2 maps to your computer's
++//                                      localhost — change BACKEND_HOST below.
++//  - Physical phone (Expo Go):        use your computer's LAN IP, e.g.
++//                                      "192.168.1.42", and make sure the
++//                                      phone is on the same Wi-Fi network.
++//
++// Easiest fix for a demo: set EXPO_PUBLIC_CHAIN_API_URL in a .env file,
++// e.g.  EXPO_PUBLIC_CHAIN_API_URL=http://192.168.1.42:4000
++const DEFAULT_HOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
++export const CHAIN_API_URL =
++  process.env.EXPO_PUBLIC_CHAIN_API_URL || `http://${DEFAULT_HOST}:4000`;
++
++export interface ChainAddProductInput {
++  id: string;
++  productName: string;
++  batchNumber?: string;
++  manufacturerName?: string;
++  category?: string;
++  mfgDate?: string;
++  expDate?: string;
++}
++
++export interface ChainAddProductResult {
++  ok: boolean;
++  txHash?: string;
++  blockNumber?: number;
++  error?: string;
++}
++
++export interface ChainProductRecord {
++  ok: boolean;
++  exists: boolean;
++  productName?: string;
++  batchNumber?: string;
++  manufacturerName?: string;
++  category?: string;
++  mfgDate?: string;
++  expDate?: string;
++  onChainTimestamp?: string;
++  error?: string;
++}
++
++async function withTimeout<T>(promise: Promise<T>, ms = 6000): Promise<T> {
++  return Promise.race([
++    promise,
++    new Promise<T>((_, reject) =>
++      setTimeout(() => reject(new Error('chain-backend request timed out')), ms)
++    ),
++  ]);
++}
++
++/** Writes a newly-approved product on-chain. Called once, at approval time. */
++export async function addProductOnChain(
++  input: ChainAddProductInput
++): Promise<ChainAddProductResult> {
++  try {
++    const res = await withTimeout(
++      fetch(`${CHAIN_API_URL}/api/chain/products`, {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json' },
++        body: JSON.stringify(input),
++      })
++    );
++    return await res.json();
++  } catch (err: any) {
++    return { ok: false, error: err?.message || 'Could not reach chain-backend' };
++  }
++}
++
++/** Free read — used to verify a scanned product against the chain. */
++export async function verifyProductOnChain(id: string): Promise<ChainProductRecord> {
++  try {
++    const res = await withTimeout(fetch(`${CHAIN_API_URL}/api/chain/products/${encodeURIComponent(id)}`));
++    return await res.json();
++  } catch (err: any) {
++    return { ok: false, exists: false, error: err?.message || 'Could not reach chain-backend' };
++  }
++}
++
++/** Records a scan on-chain (best-effort — a failure here shouldn't block the UI). */
++export async function recordScanOnChain(id: string): Promise<{ ok: boolean; scanCount?: string }> {
++  try {
++    const res = await withTimeout(
++      fetch(`${CHAIN_API_URL}/api/chain/products/${encodeURIComponent(id)}/scan`, { method: 'POST' })
++    );
++    return await res.json();
++  } catch {
++    return { ok: false };
++  }
++}
++
++export async function checkChainHealth(): Promise<boolean> {
++  try {
++    const res = await withTimeout(fetch(`${CHAIN_API_URL}/api/chain/health`), 3000);
++    const data = await res.json();
++    return !!data.ok;
++  } catch {
++    return false;
++  }
++}
+diff --git a/chainshield/src/store/appStore.ts b/chainshield/src/store/appStore.ts
+index 238de7b..422232e 100644
+--- a/chainshield/src/store/appStore.ts
++++ b/chainshield/src/store/appStore.ts
+@@ -1,4 +1,7 @@
+ import { create } from 'zustand';
++import { persist, createJSONStorage } from 'zustand/middleware';
++import AsyncStorage from '@react-native-async-storage/async-storage';
++import { addProductOnChain, recordScanOnChain } from '../services/chainApi';
+ 
+ export type UserRole = 'USER' | 'MANUFACTURER' | 'ADMIN' | null;
+ 
+@@ -39,6 +42,7 @@ export interface ProductRegistration {
+   imageUrl?: string;
+   status: 'PENDING' | 'APPROVED' | 'REJECTED';
+   txId?: string; // Set when approved
++  onChain?: boolean; // true = txId is a real tx hash from ChainShield.sol on Ganache
+ }
+ 
+ interface AppState {
+@@ -50,6 +54,8 @@ interface AppState {
+   // Consumer state
+   scanHistory: ScanResult[];
+   addScanResult: (result: ScanResult) => void;
++  scanCounts: Record<string, number>;
++  registerScan: (productId: string) => number;
+ 
+   // Manufacturer state
+   myProducts: ProductRegistration[];
+@@ -62,7 +68,7 @@ interface AppState {
+ 
+   approveManufacturer: (id: string) => void;
+   rejectManufacturer: (id: string) => void;
+-  approveProduct: (id: string) => void;
++  approveProduct: (id: string) => Promise<void>;
+   rejectProduct: (id: string) => void;
+ }
+ 
+@@ -108,64 +114,99 @@ const mockPendingManufacturers: UserProfile[] = [
+   }
+ ];
+ 
+-export const useAppStore = create<AppState>((set) => ({
+-  user: null,
+-  setUser: (user) => set({ user }),
+-  logout: () => set({ user: null }),
+-
+-  scanHistory: [],
+-  addScanResult: (result) => set((state) => ({ scanHistory: [result, ...state.scanHistory] })),
+-
+-  myProducts: [...mockRegisteredProducts], // Will be filtered by user in UI
+-  requestProductRegistration: (product) => set((state) => ({
+-    myProducts: [
+-      ...state.myProducts,
+-      { ...product, id: Math.random().toString(), status: 'PENDING' }
+-    ],
+-    pendingProducts: [
+-      ...state.pendingProducts,
+-      { ...product, id: Math.random().toString(), status: 'PENDING' }
+-    ]
+-  })),
+-
+-  pendingManufacturers: [...mockPendingManufacturers],
+-  pendingProducts: [...mockPendingProducts],
+-  registeredProducts: [...mockRegisteredProducts],
+-
+-  approveManufacturer: (id) => set((state) => ({
+-    pendingManufacturers: state.pendingManufacturers.filter(m => m.id !== id),
+-    // In a real app, update the user db.
+-  })),
+-  rejectManufacturer: (id) => set((state) => ({
+-    pendingManufacturers: state.pendingManufacturers.filter(m => m.id !== id),
+-  })),
+-
+-  approveProduct: (id) => set((state) => {
+-    const product = state.pendingProducts.find(p => p.id === id);
+-    if (!product) return state;
+-
+-    const approvedProduct: ProductRegistration = {
+-      ...product,
+-      status: 'APPROVED',
+-      txId: `0x${Math.random().toString(16).substring(2, 10)}...` // Mock txid
+-    };
+-
+-    return {
+-      pendingProducts: state.pendingProducts.filter(p => p.id !== id),
+-      registeredProducts: [approvedProduct, ...state.registeredProducts],
+-      myProducts: state.myProducts.map(p => p.id === id ? approvedProduct : p)
+-    };
+-  }),
+-
+-  rejectProduct: (id) => set((state) => {
+-    const product = state.pendingProducts.find(p => p.id === id);
+-    if (!product) return state;
+-
+-    const rejectedProduct: ProductRegistration = { ...product, status: 'REJECTED' };
+-
+-    return {
+-      pendingProducts: state.pendingProducts.filter(p => p.id !== id),
+-      myProducts: state.myProducts.map(p => p.id === id ? rejectedProduct : p)
+-    };
+-  }),
+-}));
++export const useAppStore = create<AppState>()(
++  persist(
++    (set, get) => ({
++      user: null,
++      setUser: (user) => set({ user }),
++      logout: () => set({ user: null }),
++
++      scanHistory: [],
++      addScanResult: (result) => set((state) => ({ scanHistory: [result, ...state.scanHistory] })),
++
++      scanCounts: {},
++      registerScan: (productId) => {
++        const nextCount = (get().scanCounts[productId] || 0) + 1;
++        set((state) => ({
++          scanCounts: { ...state.scanCounts, [productId]: nextCount },
++        }));
++        return nextCount;
++      },
++
++      myProducts: [...mockRegisteredProducts], // Will be filtered by user in UI
++      requestProductRegistration: (product) => {
++        // Use a single id for both lists so approve/reject can update the
++        // manufacturer's own copy of the product (previously these were
++        // two different random ids and the two lists could never sync).
++        const id = `p_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
++        const newProduct: ProductRegistration = { ...product, id, status: 'PENDING' };
++        set((state) => ({
++          myProducts: [...state.myProducts, newProduct],
++          pendingProducts: [...state.pendingProducts, newProduct],
++        }));
++      },
++
++      pendingManufacturers: [...mockPendingManufacturers],
++      pendingProducts: [...mockPendingProducts],
++      registeredProducts: [...mockRegisteredProducts],
++
++      approveManufacturer: (id) => set((state) => ({
++        pendingManufacturers: state.pendingManufacturers.filter(m => m.id !== id),
++        // In a real app, update the user db.
++      })),
++      rejectManufacturer: (id) => set((state) => ({
++        pendingManufacturers: state.pendingManufacturers.filter(m => m.id !== id),
++      })),
++
++      approveProduct: async (id) => {
++        const product = get().pendingProducts.find(p => p.id === id);
++        if (!product) return;
++
++        // This is the real write: the backend calls ChainShield.addProduct()
++        // on Ganache and gives us back the actual transaction hash.
++        const chainResult = await addProductOnChain({
++          id: product.id,
++          productName: product.productName,
++          batchNumber: product.batchNumber,
++          manufacturerName: product.manufacturerId,
++          category: product.category,
++          mfgDate: product.mfgDate,
++          expDate: product.expDate,
++        });
++
++        const approvedProduct: ProductRegistration = chainResult.ok
++          ? { ...product, status: 'APPROVED', txId: chainResult.txHash, onChain: true }
++          : {
++              // Backend/Ganache unreachable — approve locally so the demo
++              // doesn't die, but mark it clearly as NOT actually on-chain.
++              ...product,
++              status: 'APPROVED',
++              txId: `OFFLINE-${Math.random().toString(16).slice(2, 10)}`,
++              onChain: false,
++            };
++
++        set((state) => ({
++          pendingProducts: state.pendingProducts.filter(p => p.id !== id),
++          registeredProducts: [approvedProduct, ...state.registeredProducts],
++          myProducts: state.myProducts.map(p => p.id === id ? approvedProduct : p)
++        }));
++      },
++
++      rejectProduct: (id) => set((state) => {
++        const product = state.pendingProducts.find(p => p.id === id);
++        if (!product) return state;
++
++        const rejectedProduct: ProductRegistration = { ...product, status: 'REJECTED' };
++
++        return {
++          pendingProducts: state.pendingProducts.filter(p => p.id !== id),
++          myProducts: state.myProducts.map(p => p.id === id ? rejectedProduct : p)
++        };
++      }),
++    }),
++    {
++      name: 'chainshield-storage',
++      storage: createJSONStorage(() => AsyncStorage),
++    }
++  )
++);

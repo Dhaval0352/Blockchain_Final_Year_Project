@@ -1,0 +1,1 @@
+Terminal 1 (root):  npm run chainTerminal 2 (root):  npm run deployTerminal 3 (root):  npm run serverTerminal 4 (cd .antigravity-2-main\chainshield)and then : npx expo start

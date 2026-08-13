@@ -1,0 +1,8 @@
+node_modules/
+artifacts/
+cache/
+deployments.json
+*.log
+.env
+users.json
+products.json
